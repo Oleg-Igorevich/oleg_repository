@@ -1,19 +1,3 @@
-
-# MATRIX creation ---------------------------------------------------------
-
-m1 <- matrix(1:8, nrow = 2, ncol = 4)
-View(m1)
-
-m2 <- c(1:8)
-dim(m2) <- c(2, 4)
-m2
-
-v1 <- c(1:4)
-v2 <- c(3:6)
-
-m3 <- cbind(v1, v2)
-m4 <- rbind(v1, v2)
-
 # Working Directories -----------------------------------------------------
 
 getwd()
@@ -33,4 +17,348 @@ setwd("C:/Users/O/Desktop/R")
 #   git commit -m "type a message here"         <- saves commit locally 
 #   git push                                    <- pushes commit to online copy
 #                                                  of the repository
-#
+
+# MATRIX creation ---------------------------------------------------------
+
+m1 <- matrix(1:8, nrow = 2, ncol = 4)
+View(m1)
+
+m2 <- c(1:8)
+dim(m2) <- c(2, 4)
+m2
+
+v1 <- c(1:4)
+v2 <- c(3:6)
+
+m3 <- cbind(v1, v2)
+m4 <- rbind(v1, v2)
+
+# Reading/Writing tabular data --------------------------------------------
+
+# read.table
+#   file <- the name of a file or a connection
+#   hear <- logical, indicates if file has header
+#   sep <-  string, indicates how columns are separated
+#   colClasses <- character vector, indicates class of each column in the dataset
+#   nrows <- number of rows in the dataset
+#   comment.char <- character string, indicates comment character
+#   skip <- number of lines ot skip from the beginning
+#   stringsAsFactors <- should character variables be coded as factors?
+# NB: R will automatically
+#   skip lines that begin with a #
+#   figure out how many rows there are (and how much memory needs to be allocated)
+#   figure what type of var. is in each column of table
+#       NB2: telling R all these things directly will makes it run faster/more efficiently
+#   For reading in Larger Dataset, study help page for function carefully
+#     - make a rough calculation of memory required to store your dataset
+#     - save space by setting comment.char = "" if there are no commented lines in your file
+#     - use the colClasses argument. This can make function up to 2x faster.
+#       - but to do this, you need know the calss of each column in data frame
+#       - e.g. all columns numeric, so colClasses = "numeric"
+#       - to quickly figure out classes of each column:
+#         - initial <- read.table("datatable.txt", nrows = 100)
+#         - classes <- sapply(initial, class)
+#         - tabAll <- read.table("datatable.txt", colClasses = classes)
+# OOOOOH, and the math now!
+# e.g. 1,500,000 rows; 120 columns
+# 1,500,000 * 120 * 8 bytes/numeric
+# = 1440000000
+# = 1440000000 / 2^20 bytes/MB
+# = 1373.29 MB
+# = 1.34 GB + a bit more overhead...usally need about 2x, so need 2.7 GB...
+
+
+# read.csv
+#   read.csv is identical to read.table, except that default separator is comma instead of space
+#   read.csv always defaults to header = T
+
+# write.table
+
+# Reading/writing lines of a text file
+# readLines
+# writeLines
+
+# Reading/writing in R code files -----------------------------------------
+
+# dump and dput as methods to output data are textual format functions
+# textual formats are edit-able and, sometimes, recoverable when corruption!
+# preserve the metadata (sacrificing some readability), so that it doesn't need to be respecified
+
+# dput
+# dget
+y <- data.frame(a = 1, b = "a")
+dput(y)
+dput(y, file = "y.R")
+new.y <- dget("y.R")
+
+# dump is similar to dput, but can be used to save multiple objects
+# dump
+# source
+x <- "foo"
+y <- data.frame(a = 1, b = "a")
+dump(c("x", "y"), file = "data.R")
+rm(x, y)
+source("data.R")
+
+# Reading/writing in saved workspaces
+# load
+# save
+
+# Reading/writing single R objects in binary form
+# unserialize
+# serialize
+
+
+# Inerfaces to the Outside World ------------------------------------------
+
+# file <- opens a connection to a file
+str(file)
+#         description is the name of the file
+#         open is a code that indicates
+#           r <- read only
+#           w <- writing (and initializing a new file)
+#           a <- appending
+#           rb, wb, ab <- reading, writing, appending in binary mode (Windows)
+
+# gzfile <- opens a connection to a file compressed with gzip algorithm
+# bzfile <- opens a connection to a file compressed with bzip2 algorithm
+# url <- opens a conenction to a webpage
+
+# e.g.
+# con <- file("foo.txt", "r")
+# data <- read.csv(con)
+# close(con)
+# above three lines do the same as
+# data <- read.csv("foo.txt")
+# so, not really a good case for using connection
+#   in other cases useful to read parts of a file
+# con <- gzfile("words.gz")
+# x <- readLines(con, 10)
+# writeLines takes a character vector and writes each element one line at a time to a text file
+# readLines can be used, in combination with url(), to reading in lines from webpages
+
+con <- url("http://www.jhsph.edu", "r")
+x <- readLines(con)
+head(x)
+
+
+# Subsetting --------------------------------------------------------------
+
+# number of operators can be used to extract subsets of R objects
+# [ always returns object of same class; can select more than one element (one exception)
+# [[ used to extract elements of a list or data frame; can be used to extract
+#   single element and class of returned object need not be a list or data frame
+# $ used to extract elements of a list or data frame by name
+x <- c("a", "b", "c", "d", "e", "f", "g")
+x[1]
+x[2]
+x[1:4]
+x[x > "a"] # relies of lexigraphical order - ooh-la-la
+u <- x > "a"
+u
+x[u]
+
+
+# Subsetting Lists --------------------------------------------------------
+
+x <- list(foo = 1:4, bar = 0.6)
+x[1]
+# returns a list that contains a single element $foo, which is a sequence of 1:4
+x[[1]]
+# get back a sequence of 1:4 - so list vs. just sequence <- [] vs [[]]
+x$bar
+x[["bar"]]
+x["bar"]
+
+x[c(1, 2)]
+x[(1:2)]
+# so, can't use double-bracket or $ to extract multiple elements of a list
+# BUT
+# double-bracket can be used with computed indices
+name <- "foo" 
+x[[name]] ## computed index for 'foo'
+x$name ## element 'name' doesn't exist...
+x$foo ## element 'foo' does!
+# double-bracket can take an integer sequence
+x <- list(a = list(10, 12, 14), b = c(3.14, 2.81))
+x[[c(1, 1)]]
+x[[c(1, 2)]]
+x[[c(1, 3)]]
+x[[1]][[3]]
+x[[c(2, 1)]]
+x[[c(1, 2)]]
+
+
+# Subsetting Matrices -----------------------------------------------------
+
+x <- matrix(1:6, 2, 3)
+x[1, 2]
+x[1, 2, drop = FALSE]
+x[2, 1]
+x[1, ]
+x[, 1]
+x[1, ]
+x[1, , drop = F]
+
+
+# Subsetting - Partial Matching -------------------------------------------
+
+x <- list(aardvark = 1:5)
+x$a
+# in the above case, the $ looks for a name that matches the first element specified
+# BUT
+x[["a"]]
+# double-bracket doesn't do partial matching
+# but there is a secondary argument
+x[["a", exact = FALSE]]
+
+
+# Removing NA Values ------------------------------------------------------
+
+x <- c(1, 2, NA, 4, NA, 5)
+# create logical vector that tells you where the missing values are
+bad <- is.na(x)
+x[!bad]
+# ! is "bang operator"
+# multiple objects with missing values:
+x <- x
+y <- c("a", "b", NA, "d", NA, "f")
+good <- complete.cases(x, y)
+x[good]
+y[good]
+
+z <- c(4, 5, 8, 6, 7, 9)
+
+m1 <- cbind(x, z)
+m1
+good <- complete.cases(m1)
+good
+m1[good, ][1:3, ]
+# erm ok...
+# QUESTION what if one wants to see complete columns instead of rows tho?
+
+
+# Vectorized Operations ---------------------------------------------------
+
+# things can happen in parallel when computing
+
+x <- 1:4; y <- 6:9
+x + y
+x > 2
+x >= 2
+y == 8
+x * y
+x / y
+
+x <- matrix(1:4, 2, 2); y <- matrix(rep(10, 4), 2, 2)
+x
+y
+# element-wise multiplication and division
+x * y
+x / y
+
+x %*% y # true matrix multiplication - muah-ha-ha
+
+# vectorized operations allow one to avoid the use of for-loops
+
+
+# QUIZ 1 ------------------------------------------------------------------
+
+# 1) R was developed by statisticians working at: The University of Auckland
+
+# 2) the definition of free software includes
+# The freedom to run the program as you wish, for any purpose (freedom 0).
+# The freedom to study how the program works, and change it so it does your computing as you wish (freedom 1). Access to the source code is a precondition for this.
+# The freedom to redistribute copies so you can help your neighbor (freedom 2).
+# The freedom to distribute copies of your modified versions to others (freedom 3). By doing this you can give the whole community a chance to benefit from your changes. Access to the source code is a precondition for this.
+# AND EXCLUDES
+# The freedom to improve the program, and release your improvements to the public, so that the whole community benefits.
+# The freedom to prevent users from using the software for undesirable purposes.
+# The freedom to sell the software for any price.
+# The freedom to restrict access to the source code for the software.
+
+# 3) R has the following five atomic data types:
+# character
+# numeric (real numbers)
+# integer 
+# complex
+# logical (True/False)
+
+# NON ATOMIC
+# array
+# list
+# data frame
+# table
+# matrix
+
+# 4) x <- 4 produces str(x) is numeric
+
+# 5) x <- c(4, "a", TRUE) ## defaults to the lowest common denominator, character
+
+# 6) if x <- c(1, 3, 5) and y <- c(3, 2, 10), then rbind(x, y) produces a 2x3 matrix
+
+# 7) key property of vectors in R is that: elements of a vector all must be of the same class
+
+# 8) if x <- list(2, "a", "b", TRUE), the x[[1]] produces: numeric vector containing the element 2
+
+# 9) if x <- 1:4 and y <- 2, then x + y produces: a numeric vector with elements 3, 4, 5, and 6
+
+# 10) have x <- c(3, 5, 1, 10, 12, 6) and want to set all elements of this vector
+#     that are less than 6 to be equal to zero, what's the code?
+x <- c(3, 5, 1, 10, 12, 6)
+x[x < 6] <- 0
+x
+
+# 11) 
+# zippydidoo <- "https://d396qusza40orc.cloudfront.net/rprog/data/quiz1_data.zip"
+
+quizfile <- read.csv("hw1_data.csv")
+
+head(quizfile)
+# Ozone, Solar.R, Wind, Temp, Month, Day
+
+# 12)
+quizfile[1:2, ]
+
+# 13)
+length(quizfile[, 1])
+# 153
+
+# 14)
+quizfile[152:153, ]
+# QUESTION is there a way to cite the last row directly?
+
+# 15) 
+quizfile[47, "Ozone"]
+quizfile[47, 1]
+# 21
+
+# 16) 
+liamneesonsmissingdaughter <- is.na(quizfile[, 1])
+liamneesonsmissingdaughter
+sum(liamneesonsmissingdaughter)
+# 37
+
+# 17)
+mean(quizfile$Ozone, na.rm = T)
+# roughly 42.1
+mean(quizfile$Ozone)
+# ooops
+
+# 18)
+q18subset <- quizfile[quizfile$Ozone > 31 & quizfile$Temp > 90, ]
+mean(q18subset$Solar.R, na.rm = T)
+# 212.8
+
+# 19) 
+q19subset <- quizfile[quizfile$Month == 6, ]
+mean(q19subset$Temp, na.rm = T)
+# 79.1
+# OR
+mean(quizfile[quizfile$Month == 6, ]$Temp, na.rm = T)
+
+# 20)
+max(quizfile[quizfile$Month == 5, ]$Ozone, na.rm = T)
+# 115
+
+# AH...crap...can't get the...marks
