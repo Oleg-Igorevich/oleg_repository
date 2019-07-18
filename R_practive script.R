@@ -17,6 +17,7 @@ setwd("C:/Users/O/Desktop/R")
 #   git commit -m "type a message here"         <- saves commit locally 
 #   git push                                    <- pushes commit to online copy
 #                                                  of the repository
+#   git pull                                    <- pulls the most recent version of the repository
 
 # MATRIX creation ---------------------------------------------------------
 
