@@ -362,3 +362,180 @@ max(quizfile[quizfile$Month == 5, ]$Ozone, na.rm = T)
 # 115
 
 # AH...crap...can't get the...marks
+
+
+# Week 2 ------------------------------------------------------------------
+
+# control structures allow for control of the flow of execution of a program
+
+# if, else: testing a condition
+# for: execute a loop a fixed number of times
+# while: execute a loop WHILE a condition is true
+# repeat: execute an infinite loop
+# break: break the execution of a loop
+# next: skip an iteration of a loop
+# return: exit a function
+
+
+# IF ----------------------------------------------------------------------
+
+if(<condition>) {
+  ## do something
+  
+} else {
+  ## do that other thing, ok?
+}
+
+if(<condition 1>) {
+  ## do something
+} else if (<conditon 2>) {
+  ## do something else
+} else {
+  ## do that other thing, ok?
+}
+
+
+# FOR ---------------------------------------------------------------------
+
+# most basic
+for(i in 1:10) {
+  print(i)
+}
+
+# four ways of making the same for loop
+
+x <- c("a", "b", "c", "d")
+
+for(i in 1:4) {
+  print(x[1])
+}
+
+for(i in seq_along(x)) {
+  print(x[i])
+}
+
+for(letter in x) {
+  print(letter)
+}
+
+for(i in 1:4) print(x[i])
+
+# for loops can be nested!
+
+x <- matrix(1:6, 2, 3)
+
+for(i in seq_len(nrow(x))) {
+  for(j in seq_len(ncol(x))) {
+    print(x[i, j])
+  }
+}
+
+# Meanwhile, WHILE LOOPS --------------------------------------------------
+
+count <- 0
+
+while(count <- 10) {
+  print(count)
+  count <- count + 1
+}
+
+
+z <- 5
+
+while(z >= 3 && z <= 10) {
+  print(z)
+  coin <- rbinom(1, 1, 0.5)
+  
+  if(coin == 1) { ## random walk
+    z <- z + 1
+  } else {
+    z <- z - 1
+  }
+}
+
+
+# REPEAT NEXT BREAK -------------------------------------------------------
+
+# repeat initiates an infinite loop; these are not commonly used in statistical
+# applications but they do have their uses.
+# the only way to exit a "repeat" loop is to call "break"
+
+x0 <- 1
+tol <- 1e-8
+
+repeat{
+  x1 <- computeEstimate()
+  
+  it(abs(x1 - x0) < tol) {
+    break
+  } else {
+    x0 <- x1
+  }
+}
+
+# PROBLEM: the above loop may not stop, potentially.
+# best to set a hard limit on the number of iterations
+# then report whether convergence was achieved or not
+
+ # "next" is used to skip an iteration
+ 
+for(i in 1:100) {
+  if(i <= 20) {
+    ## Skip the first 20 iterations
+    next
+  }
+  ## do something here
+}
+
+# "return" signals that a function should exit and return a given value
+
+# generally, "if, while, for" aren't great in a console setting
+# BUT "apply" functions are handy for command-line interactive work
+
+
+# FUNCTIONS! --------------------------------------------------------------
+
+add_two <- function(x, y) { ## don't forget to specify the arguments!
+  x + y
+}
+
+above_10 <- function(x) {
+  use <- x > 10
+  x[use]  ## returns the subset of x that is above 10
+}
+
+above <- function(x, n) {
+  use <- x > n
+  x[use]
+}
+
+x <- 1:20
+
+above(x, 12)
+
+above(x)
+# oops, n?
+
+# let's specify a default value for n
+
+above <- function(x, n = 10) {
+  use <- x > n
+  x[use]
+}
+
+above(x)
+
+# ta-da!
+
+columnmean <- function(y, removeNA = TRUE) {
+  nc <- ncol(y)
+  means <- numeric(nc)
+  for(i in 1:nc) {
+    means[i] <- mean(y[, i], na.rm = removeNA)
+  }
+  means
+}
+
+# air quality data set...
+
+columnmean(airquality)
