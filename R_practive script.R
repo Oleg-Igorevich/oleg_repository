@@ -540,3 +540,300 @@ columnmean <- function(y, removeNA = TRUE) {
 # air quality data set...
 
 columnmean(airquality)
+
+#
+
+# Week 2 Continued - 2019-07-31 -------------------------------------------
+
+# created using 'function()' "directive"
+# stored as R objects - class 'function'
+# first class objects - i.e. can be treated like any other R object
+# can be passed as 'arguments' to other functions - important for statistics
+# can be 'nested' - i.e. can define a function inside of another function...inside of another function...inside of another function...
+# 'return' value of a function is the last expression in the function body to be evaluated
+# have 'named arguments' that often have 'default values'
+#   'formal arguments' are included in the function defenition
+#   'formals' function returns a list of all the formal arguments of a function
+#   not every function call in R makes use of all the formal arguments of a function
+#   function arguments can be 'missing' or might have default values
+
+# R functions arguments can be matches positionally or by name
+#   following calls to 'sd' are all equivalent
+mydata <- rnorm(100) ## 100 random observations following normal distribution
+sd(mydata)
+sd(x = mydata)
+sd(x = mydata, na.rm = FALSE)
+sd(na.rm = FALSE, x = mydata) ## these changes to the argument order are
+sd(na.rm = FALSE, mydata) ## technically not a problem, but confusing to read
+
+# Mixing 'positional' matching and matching 'by name'
+# by default, the argument list of a function dictates the order in which arguments are to be entered
+args(lm)
+lm(y ~ x, thedata, 1:100, model = FALSE)
+
+# but, specifying an argument by name pulls it out of the default order
+lm(data = thedata, y ~ x, model = FALSE, 1:100)
+
+# above two lm() are identical in function
+
+# some arguments NEED to be specified because do not have default values
+# e.g. 'data' argument
+
+# lm
+
+# Defining a Function -----------------------------------------------------
+
+# e.g.
+f <- function(a, b = 1, c = 2, d = NULL) {
+  theThing <- a * b + 2 + d
+  return(theThing)
+}
+# notice difference between a and d ...
+# functionally, can't run above function without specifying a
+#     ... but also can't run without specifying d, because get numeric(0)...
+
+# arguments are evaluated "lazily"...i.e. only as needed
+
+f2 <- function(a, b) {
+  a ^ 2
+}
+
+f2(2)
+# b is included in function argument list but not the function itself, so...
+#     no worries about b, because 2 is just positionally matched to a!
+
+f3 <- function(a, b) {
+  print(a)
+  print(b)
+}
+
+f3(45)
+# prints out 45, but when it hits 'print(b)', error message comes up
+
+
+# THE ... -----------------------------------------------------------------
+
+# USE CASE 1
+# '...' is used when extending another function to avoid copying entire argument list of original
+myplot <- function(x, y, type = "1", ...) {
+  plot(x, y, type = type, ...)
+}
+
+# in the above case, it carries over the unspecified remainder of the plot()
+#   function's argument list
+
+# USE CASE 2
+# passing extra arguments to methods with generic funcitons (?), but more on this later
+
+# USE CASE 3
+
+# some functions, e.g. paste() and cat(), can operate with a variable number of arguments
+# when you don't know the number of arguments in advance, can also use '...'
+args(paste)
+args(cat)
+
+# THE CATCH
+# any arguments that appear after the '...' must be named explicitly
+#     these cannot be partially matched or positionally matched
+
+paste("a", "b", sep = ":")
+paste("a", "b", se = ":")
+
+
+# SCOPING -----------------------------------------------------------------
+
+lm <- function(x) {x * x}
+lm
+
+# lm is a default function in R
+# above example assigns a new function to 'lm'
+# how does R decide whether you mean the linear-model lm or the x * x lm?
+#     R binds value to a symbol
+#     searches through a series of 'environments' to find match
+#     generally, in command line, the search order is
+#         1. search global environment
+#         2. search namespaces of each of the packages on search list
+# search list is found by
+search()
+
+# Order of search packages matters!
+#     by default, global environment or user's workspace is always first element of search list
+#     'base' package is always the last
+#     User can configure which packages get loaded on startup
+#     loading a package with 'library' puts the namespace of that package on the searchlist
+#     e.g.
+library(dplyr)
+search()
+# note, dplyr is now second in list, boom
+
+# NOTE: R has separate namespaces for functions and non-functions
+#   therefore, possible to have an object named c, and function named c
+
+# scoping rules of R are the main features that distinguish it from the original S language
+#   scoping rules determing how a value is associated with a free variable in a function
+#   R uses 'lexical scoping' and 'static scoping'
+#       a common alternative is 'dynamic scoping'
+#   related matter is how R uses the search 'list' to bind a value to a symbol
+#   lexical scoping cool for statistical computations
+
+# example
+f <- function(x, y) {
+  x ^ 2 + y / z
+}
+
+# two formal arguments, x and y
+#   z is a "free variable"
+#     scoping rules of a language determine how values are assigned to free variables
+#     free variables are neither formal arguments, nor local variables
+#       local variables are ones assigned inside the function body
+
+# LEXICAL SCOPING IN R
+#   ok, "the values of free variables are searched for in the environment,
+#   in which the function was defined."
+
+# ok...what's an environment?
+#   collection of (symbol, value) pairs, e.g. symbol x with a value of 3.14
+#   every environment has a parent environment
+#   possible for an environment to have multiple "children"
+#   only environment without parent is 'the empty environment'
+#   function + an environment = a closure (or function closure)
+
+# if value of symbol is not found in environment where function is defined
+#   the search is continued in the 'parent environment'
+#   search continues down the sequence of parent environments
+#   eventually, gets to 'top-level environment'
+#     usually this is the 'global environment' (aka, the workspace)
+#     OR the namespace of a package
+#   after 'top-level' search continues down the search list until
+#     arrive at empty environment (after the base package)
+#     ...at which point an error occurs
+
+# What is the point of all of this?
+#   typically, functions defined in global environment
+#     the values of free variables, then, are drawn from the user's workspace
+#   BUT, can define functions inside of functions inside of functions inside of fun...
+#     (some languages *cough* C *cough* can't do this...)
+#     In this scenario, the body of a function in which another is defined,
+#     becomes the latter's environment
+
+make.power <- function(n) {
+  pow <- function(x) {
+    x ^ n
+  }
+  pow
+}
+
+cube <- make.power(3)
+square <- make.power(2)
+cube(2)
+square(2)
+
+# make.power is a "constructor" function...you use it to make other functions
+
+# What's in a function's environment?
+
+ls(environment(cube))
+get("n", environment(cube))
+
+ls(environment(square))
+get("n", environment(square))
+get("pow", environment(square))
+
+
+# Lexical vs. Dynamic Scoping ---------------------------------------------
+
+y <- 10
+
+f <- function(x) {
+  y <- 2
+  y ^ 2 + g(x)
+}
+
+g <- function(x){
+  x * y
+}
+
+f(3)
+
+# g(x), because defined in the global environment, takes the value of y
+#   ...from the global environment, i.e. y == 10
+
+# f(x), in it's own environment, re-assigns value of y, so y == 2
+#   but! because g(x) is, effectively, a "free variable,"
+#   it still retains y == 10 when f(x) pulls x == 3 through it
+#     so, ultimately, as far as f(x) is concerned, g(x) == 3 * 10 == 30
+
+# the above is how it works in lexical scoping, 
+#   functions are looked up in the environment where they are created
+# in dynamic scoping, value of y is looked up in the environment where it's called
+#   so, it would be y == 2, instead of y == 10
+
+# in R, the "calling environment" (where a function is called),
+# is known as "the parent frame"
+
+# creating and then calling a function in the global environment can create the illusion of dynamic scoping
+# e.g.
+g <- function(x) {
+  a <- 3
+  x + a + y
+}
+
+g(2)
+y <- 3
+g(2)
+
+# erm...ok
+
+
+# CONSEQUENCES OF LEXICAL SCOPING -----------------------------------------
+
+# all objects must be stored in memory
+# all functions must carry a pointer to their respective defining environments
+# in S-PLUS, free variables are always looked up in the global workspace
+#   everything can be stored on the disk
+
+
+# Assignment 1 ------------------------------------------------------------
+
+
+myfiles = lapply(temp, read.csv)
+
+# monitor 1 is myfiles[[1]]
+
+pollutantmean <- function(directory, pollutant, id = 1:332) {
+  ## 'directory' is a character vector of length 1 indicating
+  ## the location of the CSV files
+  
+  ## 'pollutant' is a character vector of length 1 indicating
+  ## the name of the pollutant for which we will calculate the
+  ## mean; either "sulfate" or "nitrate".
+  
+  ## 'id' is an integer vector indicating the monitor ID numbers
+  ## to be used
+  
+  ## Return the mean of the pollutant across all monitors list
+  ## in the 'id' vector (ignoring NA values)
+  ## NOTE: Do not round the results!
+  
+  the_files = list.files(path = directory, 
+                    pattern ="*.csv",
+                    full.names = TRUE)
+  values = numeric()
+  
+  for (i in id) {
+    data <- read.csv(the_files[i])
+    values <- c(values, data[[pollutant]])
+  }
+  mean(values, na.rm = T)
+}
+  
+specdata <- "C:/Users/O/Desktop/R/oleg_repository/specdata"
+
+pollutantmean("specdata", "sulfate", 1:10)
+# 4.064128
+pollutantmean("specdata", "nitrate", 1:10)
+# 0.7976266
+pollutantmean("specdata", "nitrate", 70:72)
+# 1.706047
+pollutantmean("specdata", "nitrate", 23)
+# 1.280833
