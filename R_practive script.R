@@ -3,6 +3,8 @@
 getwd()
 setwd("C:/Users/O/Desktop/R")
 
+https://github.com/Oleg-Igorevich/oleg_repository.git
+
 # Git ---------------------------------------------------------------------
 
 #   https://github.com/Oleg-Igorevich/oleg_repository.git
@@ -796,9 +798,9 @@ g(2)
 # Assignment 1 ------------------------------------------------------------
 
 
-myfiles = lapply(temp, read.csv)
+specdata <- "C:/Users/O/Desktop/R/oleg_repository/specdata"
 
-# monitor 1 is myfiles[[1]]
+# PART 1
 
 pollutantmean <- function(directory, pollutant, id = 1:332) {
   ## 'directory' is a character vector of length 1 indicating
@@ -815,25 +817,166 @@ pollutantmean <- function(directory, pollutant, id = 1:332) {
   ## in the 'id' vector (ignoring NA values)
   ## NOTE: Do not round the results!
   
-  the_files = list.files(path = directory, 
+  the_files <- list.files(path = directory, 
                     pattern ="*.csv",
                     full.names = TRUE)
-  values = numeric()
+  
+  the_values <- numeric()
   
   for (i in id) {
-    data <- read.csv(the_files[i])
-    values <- c(values, data[[pollutant]])
+    the_data <- read.csv(the_files[i])
+    the_values <- c(the_values, the_data[[pollutant]])
   }
-  mean(values, na.rm = T)
+  
+  mean(the_values, na.rm = T)
 }
   
-specdata <- "C:/Users/O/Desktop/R/oleg_repository/specdata"
+# Testing Results:
 
-pollutantmean("specdata", "sulfate", 1:10)
+pollutantmean(specdata, "sulfate", 1:10)
 # 4.064128
-pollutantmean("specdata", "nitrate", 1:10)
+
+pollutantmean(specdata, "nitrate", 1:10)
 # 0.7976266
-pollutantmean("specdata", "nitrate", 70:72)
+
+pollutantmean(specdata, "nitrate", 70:72)
 # 1.706047
-pollutantmean("specdata", "nitrate", 23)
+
+pollutantmean(specdata, "nitrate", 23)
 # 1.280833
+
+# taking it apart:
+
+the_files <- list.files(path = specdata, 
+                       pattern ="*.csv",
+                       full.names = TRUE)
+
+the_values <- numeric()
+
+for (i in 1:10) {
+  the_data <- read.csv(the_files[i])
+  the_values <- c(the_values, the_data[["sulfate"]])
+}
+
+mean(the_values, na.rm = T)
+
+
+# PART 2
+
+# NEED to: read directory full of files
+#          report the number of complete observed cases in each data file
+#          return a dataframe where first column is the name of the file
+#          second column is the number of complete cases
+
+complete <- function(directory, id = 1:332) {
+  ## 'directory' is a character vector of length 1 indicating
+  ## the location of the CSV files
+  
+  ## 'id' is an integer vector indicating the monitor ID numbers
+  ## to be used
+  
+  ## Return a data frame of the form:
+  ## id nobs
+  ## 1 117
+  ## 2 1041
+  ## ...
+  ## where 'id' is the monitor ID number and 'nobs' is the 
+  ## number of complete cases
+  the_files <- list.files(path = directory, 
+                         pattern ="*.csv",
+                         full.names = TRUE)
+  
+  nobs <- numeric()
+  
+  for (i in id) {
+    the_data <- read.csv(the_files[i])
+    nobs <- c(nobs, sum(complete.cases(the_data)))
+  }
+  data.frame(id, nobs)
+}
+
+# Testing Results:
+
+complete(specdata, 1)
+# yup.
+
+complete(specdata, c(2, 4, 8, 10, 12))
+# yup.
+
+complete(specdata, 30:25)
+# yup...wait, what?
+complete(specdata, 25:30)
+# ohhhh, yup.
+
+complete(specdata, 3)
+# yup.
+
+# QUESTION: why does the test file successfully seem to run
+complete("specdata", 3)
+# while I get an error?
+
+# PART 3
+
+corr <- function(directory, threshold = 0) {
+        ## 'directory' is a character vector of length 1 indicating
+        ## the location of the CSV files
+  
+        ## 'threshold' is a numeric vector of length 1 indicating the
+        ## number of completely observed cases (on all variables)
+        ## required to compute the correlation between
+        ## nitrate and sulfate; the default is 0
+  
+        ## Return a numeric vector of correlations
+        ## NOTE: Do not round the result!
+  the_files <- list.files(path = directory, 
+                         pattern ="*.csv",
+                         full.names = TRUE)
+  
+  the_correlations <- vector()
+  
+  for (i in 1:332) {
+    the_data <- read.csv(the_files[i])
+    the_data <- the_data[complete.cases(the_data), ]
+    if(nrow(the_data) > threshold) {
+    the_correlations <- c(the_correlations, 
+                          cor(the_data[, "sulfate"], 
+                              the_data[, "nitrate"]))
+    }
+  }
+  return(the_correlations)
+}
+
+# Ok, so to debug
+
+corr <- function(directory, threshold = 0) {
+  ## 'directory' is a character vector of length 1 indicating
+  ## the location of the CSV files
+  
+  ## 'threshold' is a numeric vector of length 1 indicating the
+  ## number of completely observed cases (on all variables)
+  ## required to compute the correlation between
+  ## nitrate and sulfate; the default is 0
+  
+  ## Return a numeric vector of correlations
+  ## NOTE: Do not round the result!
+  
+  # browser()
+  
+  the_files <- list.files(path = directory, 
+                          pattern ="*.csv",
+                          full.names = TRUE)
+  
+  the_correlations <- vector()
+  
+  for (i in 1:332) {
+    the_data <- read.csv(the_files[i])
+    the_data <- the_data[complete.cases(the_data), ]
+    if(nrow(the_data) > threshold) {
+      the_correlations <- c(the_correlations, 
+                            cor(the_data[, "sulfate"], 
+                                the_data[, "nitrate"]))
+    }
+  }
+  return(the_correlations)
+}
+
